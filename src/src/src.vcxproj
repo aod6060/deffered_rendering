@@ -18,6 +18,9 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{622D6E14-A98D-47DB-ADA1-D71123021305}</ProjectGuid>
     <RootNamespace>src</RootNamespace>
@@ -144,24 +147,6 @@
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="graphics.cpp" />
-    <ClCompile Include="input.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="scratch_pad_app.cpp" />
-    <ClCompile Include="sys.cpp" />
-    <ClCompile Include="timer.cpp" />
-    <ClCompile Include="win.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="graphics.h" />
-    <ClInclude Include="input.h" />
-    <ClInclude Include="scratch_pad_app.h" />
-    <ClInclude Include="sys.h" />
-    <ClInclude Include="timer.h" />
-    <ClInclude Include="util.h" />
-    <ClInclude Include="win.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

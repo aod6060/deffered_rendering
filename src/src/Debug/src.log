@@ -1,4 +1,7 @@
 ﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(368,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
-  graphics.cpp
+  main.cpp
+c:\users\fred\desktop\project4\opengl_exp\deffered_rendering\src\src\main.cpp(436): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+c:\users\fred\desktop\project4\opengl_exp\deffered_rendering\src\src\main.cpp(474): warning C4018: '<': signed/unsigned mismatch
+c:\users\fred\desktop\project4\opengl_exp\deffered_rendering\src\src\main.cpp(821): warning C4018: '<': signed/unsigned mismatch
   src.vcxproj -> C:\Users\Fred\Desktop\project4\opengl_exp\deffered_rendering\src\src\..\..\bin\run_d.exe
   src.vcxproj -> ..\..\bin\run_d.pdb (Partial PDB)
