@@ -24,7 +24,7 @@ out vec3 o_normals;
 void main() {
 	gl_Position = projection * view * model * vec4(vertices, 1.0);
 	
-	o_position = model * vec4(vertices, 1.0);
+	o_position = model * vec4(vertices, 0.0);
 	
 	o_texcoords = texCoords;
 	

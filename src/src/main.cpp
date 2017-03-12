@@ -8,8 +8,8 @@
 */
 
 // Defines
-#define SCREEN_WIDTH 1024	
-#define SCREEN_HEIGHT 800
+#define SCREEN_WIDTH 800	
+#define SCREEN_HEIGHT 600
 // Shader Vertex Arrays
 #define VT_VERTICES 0
 #define VT_TEXCOORD 1
@@ -89,7 +89,10 @@ struct Screen {
 	int count;
 };
 
-
+struct Camera {
+	glm::vec3 pos;
+	glm::vec2 rot;
+};
 // Program Object
 // Variables
 // windows global variables
@@ -113,7 +116,6 @@ int util_toInt(std::string value);
 float util_toFloat(std::string value);
 double util_toDouble(std::string value);
 bool util_toBool(std::string value);
-
 // Mesh OBJ Loader
 void obj_load(MeshOBJ* obj, std::string fn);
 void obj_handle_face(std::string str, GLuint& vertice, GLuint& texCoord, GLuint& normal);
@@ -161,6 +163,12 @@ void screen_render(Screen* sc, Program* prog, Framebuffer* fb);
 
 // Methods for moving around the scene...
 void scene_render_object(Program* prog, MeshOBJ* obj, glm::vec3 pos, glm::vec3 rot);
+
+// Camrea
+void camera_create(Camera* cam, glm::vec3 v, glm::vec2 r);
+void camera_render(Camera* cam, Program* prog);
+void camera_update(Camera* cam, float delta);
+
 
 // This is the main file
 int main(int argc, char** argv) {
@@ -255,6 +263,8 @@ Framebuffer fb;
 // Screen
 Screen screen;
 
+Camera cam;
+
 // Demo Functions
 void demo_init() {
 	glEnable(GL_DEPTH_TEST);
@@ -285,13 +295,14 @@ void demo_init() {
 	prog_uniform_set1i(&dr, "normal", 2);
 	prog_uniform_create(&dr, "glossy_metal");
 	prog_uniform_set1i(&dr, "glossy_metal", 3);
+	prog_uniform_create(&dr, "cameraPos");
 	prog_unbind(&dr);
 
 	// Load Object
 	obj_load(&the_floor, "data/meshs/floor.obj");
-	obj_load(&monkey, "data/meshs/sphere.obj");
+	obj_load(&monkey, "data/meshs/monkey.obj");
 	// Create Materials
-	mat_create(&red, glm::vec3(1.0f, 0.0f, 0.0f), 0.0f, 1.0f);
+	mat_create(&red, glm::vec3(1.0f, 0.0f, 0.0f), 0.3f, 1.0f);
 	mat_create(&green, glm::vec3(0.0f, 1.0f, 0.0f), 0.5f, 0.0f);
 	mat_create(&blue, glm::vec3(0.0f, 0.0f, 1.0f), 1.0f, 0.0f);
 	mat_create(&floor_mat, glm::vec3(1.0f, 0.5f, 0.0f), 0.5f, 1.0f);
@@ -301,6 +312,8 @@ void demo_init() {
 
 	// Screen
 	screen_create(&screen, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+	camera_create(&cam, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f));
 }
 
 void demo_event(SDL_Event& e) {
@@ -325,6 +338,15 @@ void demo_update(float delta) {
 	if (rot >= 360.0f) {
 		rot -= 360.0f;
 	}
+
+
+	const Uint8* keys = SDL_GetKeyboardState(0);
+
+	if (keys[SDL_SCANCODE_ESCAPE]) {
+		isRunning = false;
+	}
+
+	camera_update(&cam, delta);
 }
 
 void demo_render() {
@@ -347,12 +369,11 @@ void demo_render() {
 		1024.0f
 	);
 
-	glm::mat4 view = glm::translate(glm::vec3(0.0f, -1.0f, 0.0f));
-
 	prog_uniform_set1i(&prog, "sw_view", dochange);
 
 	prog_uniform_setMat4(&prog, "projection", proj);
-	prog_uniform_setMat4(&prog, "view", view);
+
+	camera_render(&cam, &prog);
 
 	mat_set_material(&prog, &floor_mat);
 	scene_render_object(&prog, &the_floor, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
@@ -377,7 +398,7 @@ void demo_render() {
 	prog_bind(&dr);
 
 	proj = glm::ortho(0.0f, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT, 0.0f);
-	view = glm::mat4(1.0f);
+	glm::mat4 view = glm::mat4(1.0f);
 
 	prog_uniform_setMat4(&dr, "projection", proj);
 	
@@ -903,11 +924,72 @@ void scene_render_object(Program* prog, MeshOBJ* obj, glm::vec3 pos, glm::vec3 r
 		glm::rotate(glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
 
-	normalMatrix = glm::inverseTranspose(model);
+	normalMatrix = glm::transpose(glm::inverse(model));
 
 	prog_uniform_setMat4(prog, "model", model);
 
 	prog_uniform_setMat4(prog, "normalMatrix", normalMatrix);
 
 	obj_render(obj);
+}
+
+// Camrea
+void camera_create(Camera* cam, glm::vec3 v, glm::vec2 r) {
+	cam->pos = v;
+	cam->rot = r;
+
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+
+
+}
+
+void camera_render(Camera* cam, Program* prog) {
+	glm::quat xrot = glm::angleAxis(glm::radians(cam->rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::quat yrot = glm::angleAxis(glm::radians(cam->rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glm::mat4 rot = glm::toMat4(xrot * yrot);
+
+	glm::mat4 translate = glm::translate(-cam->pos);
+
+	glm::mat4 view = rot * translate;
+
+	prog_uniform_setMat4(prog, "view", view);
+	prog_uniform_set3f(prog, "cameraPos", cam->pos);
+}
+
+void camera_update(Camera* cam, float delta) {
+	int mx, my;
+
+	Uint32 buttons = SDL_GetRelativeMouseState(&mx, &my);
+	const Uint8* keys = SDL_GetKeyboardState(0);
+
+	float speed = 32.0f;
+
+	cam->rot.y += mx * speed * delta;
+	cam->rot.x += my * speed * delta;
+
+	cam->rot.x = glm::clamp(cam->rot.x, -90.0f, 90.0f);
+
+	
+	float yrad = glm::radians(cam->rot.y);
+
+	if (keys[SDL_SCANCODE_W]) {
+		cam->pos.x += glm::sin(yrad) * speed * delta;
+		cam->pos.z -= glm::cos(yrad) * speed * delta;
+	}
+
+	if (keys[SDL_SCANCODE_S]) {
+		cam->pos.x -= glm::sin(yrad) * speed * delta;
+		cam->pos.z += glm::cos(yrad) * speed * delta;
+	}
+
+	if (keys[SDL_SCANCODE_A]) {
+		cam->pos.x -= glm::cos(yrad) * speed * delta;
+		cam->pos.z -= glm::sin(yrad) * speed * delta;
+	}
+
+	if (keys[SDL_SCANCODE_D]) {
+		cam->pos.x += glm::cos(yrad) * speed * delta;
+		cam->pos.z += glm::sin(yrad) * speed * delta;
+	}
 }

@@ -11,6 +11,8 @@ uniform sampler2D position;
 uniform sampler2D normal;
 uniform sampler2D glossy_metal;
 
+uniform vec3 cameraPos;
+
 // varying
 in vec2 o_texcoord;
 
@@ -18,23 +20,30 @@ in vec2 o_texcoord;
 out vec4 out_color;
 
 void main() {
-	vec3 cameraPos = vec3(0.0, 1.0, 1.0);
-	vec3 light = vec3(0, 1, 1);
+	vec3 light = vec3(0.5, -0.4, -0.5);
 	
-	vec4 a = texture(albedo, o_texcoord);
-	vec4 p = texture(position, o_texcoord);
-	vec3 n = normalize(texture(normal, o_texcoord)).xyz;
-	vec2 g_m = texture(glossy_metal, o_texcoord).xy;
+	vec3 albedo = texture(albedo, o_texcoord).xyz;
+	vec3 position = texture(position, o_texcoord).xyz;
+	vec2 gm = texture(glossy_metal, o_texcoord).xy;
 	
-	vec3 lightDir = normalize(light);
+	// Do not normalize it will mess up the normals. Only normalize when 
+	// You need to.
+	vec3 normal = texture(normal, o_texcoord).xyz;
 	
-	vec3 eyeDir = normalize(cameraPos - p.xyz);
+	vec3 lightDir = normalize(-light);
 	
-	vec3 halfVec = normalize(lightDir.xyz + eyeDir);
+	vec3 eyeDir = cameraPos - position;
+	vec3 halfVec = lightDir + eyeDir;
 	
-	vec3 diffuse = a.xyz * max(dot(n, lightDir), 0.0);
+	float ndotl = max(dot(normal, lightDir), 0.0);
+	float ndoth = max(dot(normal, halfVec), 0.0);
 	
-	vec3 specular = vec3(1.0) * pow(max(dot(n, halfVec), 0.0), 255);
+	vec3 diffuse = albedo * ndotl;
+	vec3 specular = vec3(1.0) * pow(ndoth, 1);
 	
 	out_color = vec4(diffuse + specular, 1.0);
+	//out_color = vec4(position, 1.0);
+	// Note when do deffered rendering don't normailze normals. They have been 
+	// normlized alread from the gbuffers
+	//out_color = vec4(normalize(normal), 1.0);
 }
